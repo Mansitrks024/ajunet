@@ -1,0 +1,40 @@
+export const storage = {
+  get: (key: string): string | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+
+  set: (key: string, value: string): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  remove: (key: string): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      localStorage.removeItem(key);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  clear: (): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      localStorage.clear();
+      return true;
+    } catch {
+      return false;
+    }
+  },
+};
