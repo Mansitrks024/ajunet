@@ -1,8 +1,6 @@
 import Products from "@/src/components/screens/products";
-import React from "react";
+import { categories, products } from "@/src/data/products-data";
 
-const ProductsPage = () => {
-  return <Products />;
-};
-
-export default ProductsPage;
+export default function ProductsPage() {
+  return <Products categories={categories} products={products} />;
+}

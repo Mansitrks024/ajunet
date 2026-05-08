@@ -63,12 +63,32 @@ function PartnerForm() {
 
   const validate = (): FormErrors => {
     const e: FormErrors = {};
-    if (!form.name.trim()) e.name = "Required";
-    if (!form.company.trim()) e.company = "Required";
-    if (!/\S+@\S+\.\S+/.test(form.email)) e.email = "Valid email required";
-    if (!/^\d{10}$/.test(form.phone.replace(/\s/g, ""))) e.phone = "10-digit number required";
-    if (!form.city.trim()) e.city = "Required";
-    if (!form.type) e.type = "Please select";
+    if (!form.name.trim()) {
+      e.name = "Name is required";
+    } else if (form.name.trim().length < 3) {
+      e.name = "Name must be at least 3 characters";
+    }
+    if (!form.company.trim()) {
+      e.company = "Company name is required";
+    } else if (form.company.trim().length < 3) {
+      e.company = "Company name must be at least 3 characters";
+    }
+    if (!form.email.trim()) {
+      e.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      e.email = "Valid email required";
+    }
+    if (!form.phone.trim()) {
+      e.phone = "Phone number is required";
+    } else if (!/^\d{10}$/.test(form.phone.replace(/\s/g, ""))) {
+      e.phone = "10-digit number required";
+    }
+    if (!form.city.trim()) {
+      e.city = "City name is required";
+    } else if (form.city.trim().length < 2) {
+      e.city = "City must be at least 2 characters";
+    }
+    if (!form.type) e.type = "Please select business type";
     return e;
   };
 
@@ -100,7 +120,7 @@ function PartnerForm() {
     </div>
   );
 
-  
+
   const businessTypes = [
     "System Integrator",
     "Reseller / VAR",
@@ -112,11 +132,11 @@ function PartnerForm() {
 
   return (
     <div className="grid grid-cols-2 gap-4">
-      <Field 
-        label="Full Name" 
-        id="name" 
-        placeholder="Rahul Sharma" 
-        half 
+      <Field
+        label="Full Name"
+        id="name"
+        placeholder="Rahul Sharma"
+        half
         value={form.name || ''}
         onChange={e => {
           setForm(f => ({ ...f, name: e.target.value }));
@@ -124,11 +144,11 @@ function PartnerForm() {
         }}
         error={errors.name}
       />
-      <Field 
-        label="Company Name" 
-        id="company" 
-        placeholder="Acme Networks Pvt. Ltd." 
-        half 
+      <Field
+        label="Company Name"
+        id="company"
+        placeholder="Acme Networks Pvt. Ltd."
+        half
         value={form.company || ''}
         onChange={e => {
           setForm(f => ({ ...f, company: e.target.value }));
@@ -136,12 +156,12 @@ function PartnerForm() {
         }}
         error={errors.company}
       />
-      <Field 
-        label="Email Address" 
-        id="email" 
-        type="email" 
-        placeholder="rahul@company.com" 
-        half 
+      <Field
+        label="Email Address"
+        id="email"
+        type="email"
+        placeholder="rahul@company.com"
+        half
         value={form.email || ''}
         onChange={e => {
           setForm(f => ({ ...f, email: e.target.value }));
@@ -149,24 +169,25 @@ function PartnerForm() {
         }}
         error={errors.email}
       />
-      <Field 
-        label="Phone Number" 
-        id="phone" 
-        type="tel" 
-        placeholder="98765 43210" 
-        half 
+      <Field
+        label="Phone Number"
+        id="phone"
+        type="tel"
+        placeholder="9876543210"
+        half
         value={form.phone || ''}
         onChange={e => {
-          setForm(f => ({ ...f, phone: e.target.value }));
+          const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+          setForm(f => ({ ...f, phone: value }));
           setErrors(er => ({ ...er, phone: undefined }));
         }}
         error={errors.phone}
       />
-      <Field 
-        label="City" 
-        id="city" 
-        placeholder="Mumbai" 
-        half 
+      <Field
+        label="City"
+        id="city"
+        placeholder="Mumbai"
+        half
         value={form.city || ''}
         onChange={e => {
           setForm(f => ({ ...f, city: e.target.value }));
@@ -189,10 +210,9 @@ function PartnerForm() {
         <div className="flex flex-wrap gap-2">
           {businessTypes.map(t => (
             <Button
-            variant="outline"
               key={t}
               onClick={() => { setForm(f => ({ ...f, type: t })); setErrors(er => ({ ...er, type: undefined })); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-150 ${form.type === t ? "bg-primary border-primary text-primary-foreground" : "bg-card border-border text-muted-foreground hover:border-primary/30 hover:text-primary"}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-150 ${form.type === t ? "bg-primary border-primary text-primary-foreground" : "bg-card border-border text-muted-foreground hover:border-primary/30 hover:text-background"}`}
             >
               {t}
             </Button>
@@ -213,13 +233,13 @@ function PartnerForm() {
       </div>
       <div className="col-span-2">
         <div className="flex justify-center ">
-        <Button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="bg-primary hover:bg-primary/90 active:scale-95 text-primary-foreground font-bold py-3 transition-all duration-200 text-sm tracking-wide"
-        >
-          {loading ? "Sending..." : "Submit Partnership Application"}
-        </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="bg-primary hover:bg-primary/90 active:scale-95 text-primary-foreground font-bold py-3 transition-all duration-200 text-sm tracking-wide"
+          >
+            {loading ? "Sending..." : "Submit Partnership Application"}
+          </Button>
         </div>
         <p className="text-center text-muted-foreground text-xs mt-3">We'll respond within 2 business days. No spam, ever.</p>
       </div>
@@ -231,7 +251,7 @@ export default function GetStarted() {
   const [formRef, formVisible] = useInView();
   const formSectionRef = useRef<HTMLDivElement | null>(null);
 
-  const scrollToForm = () => formSectionRef.current?.scrollIntoView({ behavior: "smooth" });  
+  const scrollToForm = () => formSectionRef.current?.scrollIntoView({ behavior: "smooth" });
 
   return (
     <section id="get-started" ref={formRef} className="bg-primary py-24 lg:py-32 relative overflow-hidden">
@@ -243,7 +263,7 @@ export default function GetStarted() {
         <div className="grid lg:grid-cols-2 gap-16 items-start">
 
           {/* Left — pitch */}
-          <div className={`transition-all duration-700 ${formVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-8"}`}>          
+          <div className={`transition-all duration-700 ${formVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-8"}`}>
             <div className="inline-flex items-center gap-2 mb-5">
               <div className="w-10 h-0.5 bg-primary-foreground/30 rounded-[2px]" />
               <span className="text-md font-bold tracking-[0.1em] uppercase text-primary-foreground">

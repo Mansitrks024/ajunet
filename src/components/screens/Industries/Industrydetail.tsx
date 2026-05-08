@@ -101,7 +101,7 @@ export default function IndustryDetail({ industryId }: IndustryDetailProps) {
       {/* ══ HERO ══ */}
       <section className="relative bg-gradient-to-br from-primary/5 via-background to-primary/3 overflow-hidden">
         {/* Animated Network Canvas */}
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-[0.7]" />;
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-[0.7]" />
         
         {/* Radial gradient overlay */}
         <div

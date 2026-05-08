@@ -128,8 +128,8 @@ const ProductPortfolio = () => {
                 </h3>
 
                 {/* Description */}
-                <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-                  {product.ports} • {product.power}
+                <p className="text-sm text-muted-foreground leading-relaxed mb-5 line-clamp-1">
+                  {product.ports}
                 </p>
 
                 {/* Bottom accent line */}

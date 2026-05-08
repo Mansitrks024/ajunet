@@ -127,10 +127,9 @@ export default function Contact() {
           >
             {contactDetails.filter(c => c.href && (c.icon === 'phone' || c.icon === 'email')).map((c, i) => (
               <Button
-              variant="outline"
                 key={c.icon}
                 asChild
-                className={`inline-flex items-center gap-2 font-semibold text-sm transition-colors duration-200 ${c.icon === 'phone'
+                className={`inline-flex items-center gap-2 font-semibold text-sm transition-colors duration-200 border ${c.icon === 'phone'
                   ? 'bg-card text-foreground hover:bg-muted hover:text-foreground border-border'
                   : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground border-primary'
                   }`}

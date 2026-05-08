@@ -1,5 +1,5 @@
 import ProductDetail from "@/src/components/screens/products/ProductDetail";
-import { products, categories } from "@/src/data/products-data";
+import { products, Product } from "@/src/data/products-data";
 import { notFound } from "next/navigation";
 
 interface PageProps {
@@ -8,22 +8,25 @@ interface PageProps {
   }>;
 }
 
-const allProductIds = products.map(p => p.id.toString());
+function findProduct(slug: string): Product | null {
+  return (
+    products.find((p) => {
+      if (!p.product_url) return false;
+      const s = p.product_url.split("/product/")[1]?.replace(/\/$/, "");
+      return s === slug;
+    }) || null
+  );
+}
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  if (!allProductIds.includes(id)) {
+  // Try to find product by slug extracted from product_url
+  const product = findProduct(id);
+
+  if (!product) {
     notFound();
   }
 
-  const product = products.find(p => p.id.toString() === id);
-  const category = product ? categories.find(c => c.id === product.category) : undefined;
-  const categoryData = category ? {
-    id: category.id,
-    label: category.label,
-    subcategories: category.subcategories
-  } : undefined;
-
-  return <ProductDetail product={product!} category={categoryData} />;
+  return <ProductDetail product={product} />;
 }

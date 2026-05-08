@@ -1,12 +1,18 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { industries, type Industry } from "@/src/data/industries";
 
 const IndustriesWeServe = () => {
+  const router = useRouter();
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  const handleIndustryClick = (industryId: string) => {
+    router.push(`/industries/${industryId}`);
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -68,7 +74,7 @@ const IndustriesWeServe = () => {
             {industries.map((item, i) => (
               <div
                 key={i}
-                className={`group flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 cursor-default
+                className={`group flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 cursor-pointer
                   ${
                     activeIndex === i
                       ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
@@ -83,6 +89,7 @@ const IndustriesWeServe = () => {
                 }}
                 onMouseEnter={() => setActiveIndex(i)}
                 onMouseLeave={() => setActiveIndex(null)}
+                onClick={() => handleIndustryClick(item.id)}
               >
                 {/* Icon */}
                 <div

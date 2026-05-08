@@ -53,12 +53,27 @@ function ContactForm() {
 
   const validate = (): FormErrors => {
     const e: FormErrors = {};
-    if (!form.name.trim()) e.name = "Required";
-    if (!/\S+@\S+\.\S+/.test(form.email)) e.email = "Valid email required";
-    if (!/^\d{10}$/.test(form.phone.replace(/\s/g, "")))
-      e.phone = "10-digit number";
+    if (!form.name.trim()) {
+      e.name = "Name is required";
+    } else if (form.name.trim().length < 3) {
+      e.name = "Name must be at least 3 characters";
+    }
+    if (!form.email.trim()) {
+      e.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      e.email = "Valid email required";
+    }
+    if (!form.phone.trim()) {
+      e.phone = "Phone number is required";
+    } else if (!/^\d{10}$/.test(form.phone.replace(/\s/g, ""))) {
+      e.phone = "10-digit number required";
+    }
     if (!form.subject) e.subject = "Please select a subject";
-    if (!form.message.trim()) e.message = "Required";
+    if (!form.message.trim()) {
+      e.message = "Message is required";
+    } else if (form.message.trim().length < 10) {
+      e.message = "Message must be at least 10 characters";
+    }
     return e;
   };
 
@@ -166,10 +181,11 @@ function ContactForm() {
             type="tel"
             value={form.phone}
             onChange={(e) => {
-              setForm({ ...form, phone: e.target.value });
+              const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+              setForm({ ...form, phone: value });
               setErrors({ ...errors, phone: undefined });
             }}
-            placeholder="98765 43210"
+            placeholder="9876543210"
             className={`w-full px-4 py-3 rounded-xl border text-sm ${errors.phone
               ? "border-red-400 bg-red-50"
               : "border-gray-200 bg-gray-50 hover:border-gray-300"
