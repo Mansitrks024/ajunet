@@ -6,6 +6,7 @@ import {
   Download,
   ExternalLink,
   ChevronRight,
+  ChevronDown,
   Zap,
   Globe,
   Shield,
@@ -25,9 +26,15 @@ import {
   Box,
   MapPin,
 } from "lucide-react";
-import { Product } from "@/src/data/products-data";
+import {
+  Product,
+  products,
+  SPEC_GROUPS,
+  GROUP_ICONS,
+} from "@/src/data/products-data";
 import { Button } from "@/src/components/ui/button";
 import { Tab } from "@/src/components/common/Tab";
+import ProductSlider from "@/src/components/common/ProductSlider";
 
 // ── IMAGE GALLERY ────
 function ImageGallery({
@@ -84,11 +91,10 @@ function ImageGallery({
             <button
               key={i}
               onClick={() => setActive(i)}
-              className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all shrink-0 bg-white relative ${
-                active === i
+              className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all shrink-0 bg-white relative ${active === i
                   ? "border-blue-500 shadow-md shadow-blue-100 scale-105"
                   : "border-slate-100 hover:border-slate-300 hover:scale-105"
-              }`}
+                }`}
             >
               <img
                 src={img}
@@ -120,84 +126,19 @@ function ImageGallery({
   );
 }
 
-// ── SPEC TABLE ────────────────────────────────────────────────
-const SPEC_GROUPS: Record<string, string[]> = {
-  "Port Configuration": [
-    "Fixed Port",
-    "POE Port",
-    "SFP Slot Port",
-    "Ethernet Port",
-    "Uplink",
-  ],
-  Performance: [
-    "Switching Capacity",
-    "Forwarding Rate",
-    "Forwarding Mode",
-    "MAC",
-    "Buffer Memory",
-    "Jumbo Frame",
-  ],
-  "Power & PoE": [
-    "Total PWR / Input Voltage",
-    "Power Consumption",
-    "Power Supply",
-    "MAX / AVERAGE Power Per Port",
-    "Power Supply Pin",
-    "AVERAGE Power Per Port",
-    "MAX Power PoE Port",
-    "PoE Standard",
-    "PoE Port",
-    "PoE Management",
-  ],
-  Network: [
-    "Network Protocol",
-    "Ethernet Port Feature",
-    "Twisted Pair Transmission",
-    "Network Management Type",
-    "Optical Cable",
-    "Fiber Port Feature",
-  ],
-  Physical: [
-    "Dimension",
-    "Net /Gross Weight",
-    "Installation",
-    "Installation Method",
-    "F an",
-  ],
-  Environment: ["Operation TEMP / Humidity", "Storage TEMP / Humidity"],
-  "Security & Compliance": [
-    "Certification",
-    "Warranty",
-    "Protection",
-    "Protection Level",
-    "P rotection Level",
-  ],
-  "Management & Features": [
-    "Interface",
-    "Layer 3 Features",
-    "VLAN",
-    "Port Aggregation",
-    "Spanning Tree",
-    "Multicast",
-    "Port Mirroring",
-    "QoS",
-    "ACL",
-    "Security",
-    "DHCP",
-    "Management",
-    "System",
-  ],
-};
-
-const GROUP_ICONS: Record<string, React.ReactNode> = {
-  "Port Configuration": <Layers size={13} className="text-blue-500" />,
-  Performance: <Cpu size={13} className="text-violet-500" />,
-  "Power & PoE": <Zap size={13} className="text-amber-500" />,
-  Network: <Globe size={13} className="text-sky-500" />,
-  Physical: <Package size={13} className="text-slate-500" />,
-  Environment: <Thermometer size={13} className="text-orange-500" />,
-  "Security & Compliance": <Shield size={13} className="text-emerald-500" />,
-  "Management & Features": <Settings size={13} className="text-indigo-500" />,
+// ── ICON MAPPER ──
+const getIconComponent = (iconName: string) => {
+  const iconMap: Record<string, React.ReactNode> = {
+    Layers: <Layers size={13} className="text-blue-500" />,
+    Cpu: <Cpu size={13} className="text-violet-500" />,
+    Zap: <Zap size={13} className="text-amber-500" />,
+    Globe: <Globe size={13} className="text-sky-500" />,
+    Package: <Package size={13} className="text-slate-500" />,
+    Thermometer: <Thermometer size={13} className="text-orange-500" />,
+    Shield: <Shield size={13} className="text-emerald-500" />,
+    Settings: <Settings size={13} className="text-indigo-500" />,
+  };
+  return iconMap[iconName] || <Settings size={13} className="text-slate-400" />;
 };
 
 function SpecTable({ specs = {} }: { specs?: Record<string, string> }) {
@@ -232,44 +173,73 @@ function SpecTable({ specs = {} }: { specs?: Record<string, string> }) {
   if (remaining.length > 0)
     grouped.push({ groupName: "Additional Specifications", rows: remaining });
 
+  // State for accordion - first section open by default
+  const [openSection, setOpenSection] = useState<string>(grouped[0]?.groupName || "");
+
+  const toggleSection = (groupName: string) => {
+    setOpenSection(openSection === groupName ? "" : groupName);
+  };
+
   return (
-    <div className="space-y-6">
-      {grouped.map(({ groupName, rows }) => (
-        <div key={groupName}>
-          <div className="flex items-center gap-2 mb-3">
-            {GROUP_ICONS[groupName] || (
-              <Settings size={13} className="text-slate-400" />
-            )}
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-              {groupName}
-            </h4>
+    <div className="space-y-4">
+      {grouped.map(({ groupName, rows }) => {
+        const isOpen = openSection === groupName;
+        return (
+          <div key={groupName} className="border border-slate-100 rounded-2xl overflow-hidden">
+            {/* Clickable header */}
+            <button
+              onClick={() => toggleSection(groupName)}
+              className="w-full px-5 py-4 flex items-center justify-between bg-white hover:bg-slate-50 transition-colors duration-200"
+            >
+              <div className="flex items-center gap-3">
+                {getIconComponent(GROUP_ICONS[groupName] || "Settings")}
+                <h4 className="text-sm font-semibold text-slate-700">
+                  {groupName}
+                </h4>
+                <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-full">
+                  {rows.length}
+                </span>
+              </div>
+              <ChevronDown
+                size={18}
+                className={`text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                  }`}
+              />
+            </button>
+
+            {/* Collapsible content */}
+            <div
+              className={`transition-all duration-300 ease-in-out ${isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                } overflow-hidden`}
+            >
+              <div className="border-t border-slate-100">
+                <table className="w-full text-sm">
+                  <tbody>
+                    {rows.map(([key, value], i) => (
+                      <tr
+                        key={key}
+                        className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}
+                      >
+                        <td className="py-3 px-5 font-medium text-slate-500 w-2/5 align-top border-r border-slate-100/80 text-xs leading-relaxed">
+                          {key.replace(/\s+/g, " ").trim()}
+                        </td>
+                        <td className="py-3 px-5 text-slate-700 align-top text-xs leading-relaxed">
+                          {String(value)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-          <div className="rounded-2xl border border-slate-100 overflow-hidden">
-            <table className="w-full text-sm">
-              <tbody>
-                {rows.map(([key, value], i) => (
-                  <tr
-                    key={key}
-                    className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}
-                  >
-                    <td className="py-3 px-4 font-medium text-slate-500 w-2/5 align-top border-r border-slate-100/80 text-xs leading-relaxed">
-                      {key.replace(/\s+/g, " ").trim()}
-                    </td>
-                    <td className="py-3 px-4 text-slate-700 align-top text-xs leading-relaxed">
-                      {String(value)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
-// ── FEATURES ─────────────────────────────────────────────────
+// ── FEATURES ───
 function FeaturesSection({ text = "" }: { text?: string }) {
   if (!text) return null;
 
@@ -329,7 +299,7 @@ function FeaturesSection({ text = "" }: { text?: string }) {
   );
 }
 
-// ── DESCRIPTION ───────────────────────────────────────────────
+// ── DESCRIPTION ──
 function DescriptionSection({ description = "" }: { description?: string }) {
   if (!description)
     return (
@@ -373,7 +343,7 @@ function DescriptionSection({ description = "" }: { description?: string }) {
   );
 }
 
-// ── DIMENSIONS SECTION ───────────────────────────────────────
+// ── DIMENSIONS SECTION ────
 function DimensionsSection({
   images = [],
   text = "",
@@ -436,7 +406,7 @@ function DimensionsSection({
   );
 }
 
-// ── ORDER INFO SECTION ────────────────────────────────────────
+// ── ORDER INFO SECTION ────
 function OrderInfoSection({
   items = [],
 }: {
@@ -505,7 +475,7 @@ function OrderInfoSection({
   );
 }
 
-// ── APPLICATIONS SECTION ──────────────────────────────────────
+// ── APPLICATIONS SECTION ────
 function ApplicationsSection({
   text = "",
   images = [],
@@ -517,9 +487,9 @@ function ApplicationsSection({
   if (!text && validImages.length === 0) return null;
   const bullets = text
     ? text
-        .split("|")
-        .map((s) => s.trim())
-        .filter(Boolean)
+      .split("|")
+      .map((s) => s.trim())
+      .filter(Boolean)
     : [];
 
   return (
@@ -590,7 +560,7 @@ function ApplicationsSection({
   );
 }
 
-// ── QUICK SPEC CARD ───────────────────────────────────────────
+// ── QUICK SPEC CARD ────
 function QuickSpec({
   icon,
   label,
@@ -603,17 +573,17 @@ function QuickSpec({
   colorClass: string;
 }) {
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-start gap-3 hover:border-slate-200 hover:shadow-sm transition-all duration-200">
+    <div className="bg-white border border-slate-100 rounded-xl p-3 flex items-center gap-2.5 hover:border-slate-200 hover:shadow-sm transition-all duration-200">
       <div
-        className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${colorClass}`}
+        className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`}
       >
         {icon}
       </div>
-      <div className="min-w-0">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+      <div className="min-w-0 flex-1">
+        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
           {label}
         </p>
-        <p className="text-xs text-slate-700 font-semibold leading-tight line-clamp-2">
+        <p className="text-[11px] text-slate-700 font-semibold leading-tight line-clamp-2">
           {value}
         </p>
       </div>
@@ -621,7 +591,56 @@ function QuickSpec({
   );
 }
 
-// ── MAIN PRODUCT DETAIL ───────────────────────────────────────
+// ── RELATED PRODUCTS SECTION ──
+function RelatedProductsSection({
+  currentProduct,
+}: {
+  currentProduct: Product;
+}) {
+  const getRelatedProducts = (): Product[] => {
+    // Filter products based on same main category or tag
+    const related = products
+      .filter(
+        (p) =>
+          p.product_id !== currentProduct.product_id &&
+          (p.main_category === currentProduct.main_category ||
+            p.tag === currentProduct.tag ||
+            p.sub_categories.includes(
+              currentProduct.sub_categories.split("|")[0]?.trim(),
+            )),
+      )
+      .slice(0, 8); // Limit to 8 products
+
+    // If no related products found, return some random products as fallback
+    if (related.length === 0) {
+      return products
+        .filter((p) => p.product_id !== currentProduct.product_id)
+        .slice(0, 6);
+    }
+
+    return related;
+  };
+
+  const relatedProducts = getRelatedProducts();
+
+  if (relatedProducts.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-16">
+      <ProductSlider
+        products={relatedProducts}
+        title="Related Products"
+        subtitle="Discover similar products that might interest you"
+        slidesPerView={4}
+        spaceBetween={24}
+      />
+    </div>
+  );
+}
+
+// ── MAIN PRODUCT DETAIL ──
 export default function ProductDetail({ product }: { product: Product }) {
   const [tab, setTab] = useState("overview");
 
@@ -684,12 +703,12 @@ export default function ProductDetail({ product }: { product: Product }) {
     { id: "overview", label: "Overview" },
     ...(hasFeatures
       ? [
-          {
-            id: "features",
-            label: "Features",
-            count: Math.floor(featureCount / 2),
-          },
-        ]
+        {
+          id: "features",
+          label: "Features",
+          count: Math.floor(featureCount / 2),
+        },
+      ]
       : []),
     ...(specCount > 0
       ? [{ id: "specs", label: "Specifications", count: specCount }]
@@ -704,7 +723,7 @@ export default function ProductDetail({ product }: { product: Product }) {
   return (
     <div className="min-h-screen">
       {/* bg-slate-50/50 */}
-      {/* ── HEADER ─────────────────────────────────────────── */}
+      {/* ── HEADER ─── */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md mt-4">
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
           <Link
@@ -736,7 +755,7 @@ export default function ProductDetail({ product }: { product: Product }) {
       </header>
 
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-8">
-        {/* ── TOP SECTION ─────────────────────────────────── */}
+        {/* ── TOP SECTION ─── */}
         <div className="grid lg:grid-cols-2 gap-10 mb-10">
           {/* Gallery */}
           <div>
@@ -777,10 +796,10 @@ export default function ProductDetail({ product }: { product: Product }) {
             </div>
 
             {/* Quick spec grid */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-2.5">
               {specs["Total PWR / Input Voltage"] && (
                 <QuickSpec
-                  icon={<Zap size={14} className="text-amber-500" />}
+                  icon={<Zap size={12} className="text-amber-500" />}
                   label="Power"
                   value={specs["Total PWR / Input Voltage"]}
                   colorClass="bg-amber-50"
@@ -788,7 +807,7 @@ export default function ProductDetail({ product }: { product: Product }) {
               )}
               {(specs["PoE Standard"] || specs["Network Protocol"]) && (
                 <QuickSpec
-                  icon={<Globe size={14} className="text-sky-500" />}
+                  icon={<Globe size={12} className="text-sky-500" />}
                   label="Standard"
                   value={specs["PoE Standard"] || "IEEE 802.3"}
                   colorClass="bg-sky-50"
@@ -796,7 +815,7 @@ export default function ProductDetail({ product }: { product: Product }) {
               )}
               {specs["Switching Capacity"] && (
                 <QuickSpec
-                  icon={<Cpu size={14} className="text-violet-500" />}
+                  icon={<Cpu size={12} className="text-violet-500" />}
                   label="Switching"
                   value={specs["Switching Capacity"]}
                   colorClass="bg-violet-50"
@@ -804,7 +823,7 @@ export default function ProductDetail({ product }: { product: Product }) {
               )}
               {specs["Certification"] && (
                 <QuickSpec
-                  icon={<Shield size={14} className="text-emerald-500" />}
+                  icon={<Shield size={12} className="text-emerald-500" />}
                   label="Certified"
                   value={specs["Certification"].split(";")[0].trim()}
                   colorClass="bg-emerald-50"
@@ -812,49 +831,49 @@ export default function ProductDetail({ product }: { product: Product }) {
               )}
               {specs["Warranty"] && (
                 <QuickSpec
-                  icon={<Tag size={14} className="text-violet-500" />}
+                  icon={<Tag size={12} className="text-violet-500" />}
                   label="Warranty"
                   value={specs["Warranty"].split(",")[0].trim()}
                   colorClass="bg-violet-50"
                 />
               )}
-              {specs["Fixed Port"] && (
-                <div className="col-span-2 bg-slate-900 rounded-2xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Layers size={12} className="text-slate-400" />
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      Port Configuration
-                    </p>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    {specs["Fixed Port"]}
+            </div>
+            {specs["Fixed Port"] && (
+              <div className="col-span-2 bg-slate-900 rounded-xl p-3.5">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Layers size={11} className="text-slate-400" />
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                    Port Configuration
                   </p>
                 </div>
-              )}
-            </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  {specs["Fixed Port"]}
+                </p>
+              </div>
+            )}
 
             {/* Additional specs pills */}
             {(specs["MAC"] ||
               specs["Buffer Memory"] ||
               specs["Forwarding Rate"]) && (
-              <div className="flex flex-wrap gap-2">
-                {specs["MAC"] && (
-                  <span className="text-[11px] font-medium bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg border border-slate-200">
-                    MAC: {specs["MAC"]}
-                  </span>
-                )}
-                {specs["Buffer Memory"] && (
-                  <span className="text-[11px] font-medium bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg border border-slate-200">
-                    Buffer: {specs["Buffer Memory"]}
-                  </span>
-                )}
-                {specs["Forwarding Rate"] && (
-                  <span className="text-[11px] font-medium bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg border border-slate-200">
-                    Fwd Rate: {specs["Forwarding Rate"]}
-                  </span>
-                )}
-              </div>
-            )}
+                <div className="flex flex-wrap gap-2">
+                  {specs["MAC"] && (
+                    <span className="text-[11px] font-medium bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg border border-slate-200">
+                      MAC: {specs["MAC"]}
+                    </span>
+                  )}
+                  {specs["Buffer Memory"] && (
+                    <span className="text-[11px] font-medium bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg border border-slate-200">
+                      Buffer: {specs["Buffer Memory"]}
+                    </span>
+                  )}
+                  {specs["Forwarding Rate"] && (
+                    <span className="text-[11px] font-medium bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg border border-slate-200">
+                      Fwd Rate: {specs["Forwarding Rate"]}
+                    </span>
+                  )}
+                </div>
+              )}
 
             {/* Action buttons */}
             <div className="flex flex-wrap gap-3 pt-2">
@@ -885,24 +904,10 @@ export default function ProductDetail({ product }: { product: Product }) {
                 </Button>
               )}
             </div>
-
-            {/* ID info */}
-            {/* <div className="flex flex-wrap gap-4 pt-2 border-t border-slate-100">
-              {product.product_id && (
-                <div className="text-xs text-slate-400">
-                  <span className="font-medium">Product ID:</span> {product.product_id}
-                </div>
-              )}
-              {product.sku && (
-                <div className="text-xs text-slate-400">
-                  <span className="font-medium">SKU:</span> {product.sku}
-                </div>
-              )}
-            </div> */}
           </div>
         </div>
 
-        {/* ── TAB SECTION ─────────────────────────────────── */}
+        {/* ── TAB SECTION ─── */}
         <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
           {/* Tab bar */}
           <div className="border-b border-slate-100 px-6 flex gap-1 overflow-x-auto">
@@ -977,14 +982,8 @@ export default function ProductDetail({ product }: { product: Product }) {
           </div>
         </div>
 
-        {/* ── BACK ────────────────────────────────────────── */}
-        {/* <div className="mt-8 flex items-center gap-4">
-          <Link href="/products"
-            className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-700 transition-colors group">
-            <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
-            Back to all products
-          </Link>
-        </div> */}
+        {/* ── RELATED PRODUCTS ───*/}
+        <RelatedProductsSection currentProduct={product} />
       </div>
     </div>
   );

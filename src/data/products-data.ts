@@ -298,3 +298,84 @@ export const badgeColors: Record<string, string> = {
   "Hi-Power": "bg-rose-500 text-white",
   default: "bg-gray-700 text-white",
 };
+
+// ── GROUP ICONS ───────────────────────────────────────────────
+export const GROUP_ICONS: Record<string, string> = {
+  "Port Configuration": "Layers",
+  Performance: "Cpu",
+  "Power & PoE": "Zap",
+  Network: "Globe",
+  Physical: "Package",
+  Environment: "Thermometer",
+  "Security & Compliance": "Shield",
+  "Management & Features": "Settings",
+};
+
+// ── SPEC GROUPS ────────────────────────────────────────────────
+export const SPEC_GROUPS: Record<string, string[]> = {
+  "Port Configuration": [
+    "Fixed Port",
+    "POE Port",
+    "SFP Slot Port",
+    "Ethernet Port",
+    "Uplink",
+  ],
+  Performance: [
+    "Switching Capacity",
+    "Forwarding Rate",
+    "Forwarding Mode",
+    "MAC",
+    "Buffer Memory",
+    "Jumbo Frame",
+  ],
+  "Power & PoE": [
+    "Total PWR / Input Voltage",
+    "Power Consumption",
+    "Power Supply",
+    "MAX / AVERAGE Power Per Port",
+    "Power Supply Pin",
+    "AVERAGE Power Per Port",
+    "MAX Power PoE Port",
+    "PoE Standard",
+    "PoE Port",
+    "PoE Management",
+  ],
+  Network: [
+    "Network Protocol",
+    "Ethernet Port Feature",
+    "Twisted Pair Transmission",
+    "Network Management Type",
+    "Optical Cable",
+    "Fiber Port Feature",
+  ],
+  Physical: [
+    "Dimension",
+    "Net /Gross Weight",
+    "Installation",
+    "Installation Method",
+    "F an",
+  ],
+  Environment: ["Operation TEMP / Humidity", "Storage TEMP / Humidity"],
+  "Security & Compliance": [
+    "Certification",
+    "Warranty",
+    "Protection",
+    "Protection Level",
+    "P rotection Level",
+  ],
+  "Management & Features": [
+    "Interface",
+    "Layer 3 Features",
+    "VLAN",
+    "Port Aggregation",
+    "Spanning Tree",
+    "Multicast",
+    "Port Mirroring",
+    "QoS",
+    "ACL",
+    "Security",
+    "DHCP",
+    "Management",
+    "System",
+  ],
+};

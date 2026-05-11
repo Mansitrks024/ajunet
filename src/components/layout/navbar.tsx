@@ -1,13 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/src/components/ui/button";
+import { ChevronDown, Layers, Factory, Globe, Zap, Wrench, Wifi } from "lucide-react";
+import { categories } from "@/src/data/products-data";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProductsDropdownOpen, setIsProductsDropdownOpen] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Get current active category from URL
+  const activeCategory = searchParams.get("category");
+
+  const iconMap: Record<string, any> = {
+    Layers,
+    Factory,
+    Globe,
+    Zap,
+    Wrench,
+    Wifi,
+  };
+
+  const handleMouseEnter = () => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+    }
+    setIsProductsDropdownOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setIsProductsDropdownOpen(false);
+    }, 200);
+  };
 
   return (
     <nav className="fixed top-0 w-full bg-card shadow-sm border-b z-50">
@@ -42,13 +72,89 @@ export default function Navbar() {
                 About Us
                 <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-primary transform ${pathname === "/about-us" ? "scale-x-100" : "scale-x-0"} group-hover:scale-x-100 transition-transform duration-300`}></span>
               </Link>
-              <Link
-                href="/products"
-                className={`${pathname === "/products" ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground hover:bg-accent"} px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative group`}
+              <div
+                className="relative"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
               >
-                Products
-                <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-primary transform ${pathname === "/products" ? "scale-x-100" : "scale-x-0"} group-hover:scale-x-100 transition-transform duration-300`}></span>
-              </Link>
+                <button
+                  className={`${pathname.startsWith("/products") ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground hover:bg-accent"} px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative group flex items-center gap-1`}
+                >
+                  Products
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform duration-300 ${isProductsDropdownOpen ? "rotate-180" : ""}`}
+                  />
+                  <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-primary transform ${pathname.startsWith("/products") ? "scale-x-100" : "scale-x-0"} group-hover:scale-x-100 transition-transform duration-300`}></span>
+                </button>
+
+                {/* Dropdown Menu */}
+                {isProductsDropdownOpen && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0 w-72 bg-card border-2 border-border rounded-2xl shadow-xl shadow-primary/5 overflow-hidden z-[60] pt-2">
+                    <div className="p-3 space-y-1">
+                      <Link
+                        href="/products"
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
+                          !activeCategory && pathname === "/products"
+                            ? "bg-gradient-to-r from-primary/5 to-primary/10 text-primary"
+                            : "hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 hover:text-primary"
+                        }`}
+                        onClick={() => setIsProductsDropdownOpen(false)}
+                      >
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200 ${
+                          !activeCategory && pathname === "/products"
+                            ? "bg-primary/10"
+                            : "bg-muted group-hover:bg-primary/10"
+                        }`}>
+                          <Layers size={16} className={`transition-colors duration-200 ${
+                            !activeCategory && pathname === "/products"
+                              ? "text-primary"
+                              : "text-muted-foreground group-hover:text-primary"
+                          }`} />
+                        </div>
+                        <span>All Products</span>
+                      </Link>
+                      {categories.map((category) => {
+                        const Icon = iconMap[category.icon] || Layers;
+                        return (
+                          <Link
+                            key={category.id}
+                            href={`/products?category=${category.id}`}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
+                              activeCategory === category.id
+                                ? "bg-gradient-to-r from-primary/5 to-primary/10 text-primary"
+                                : "hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 hover:text-primary"
+                            }`}
+                            onClick={() => setIsProductsDropdownOpen(false)}
+                          >
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200 ${
+                              activeCategory === category.id
+                                ? "bg-primary/10"
+                                : "bg-muted group-hover:bg-primary/10"
+                            }`}>
+                              <Icon size={16} className={`transition-colors duration-200 ${
+                                activeCategory === category.id
+                                  ? "text-primary"
+                                  : "text-muted-foreground group-hover:text-primary"
+                              }`} />
+                            </div>
+                            <div className="flex-1">
+                              <span className="block">{category.label}</span>
+                              <span className={`block text-xs ${
+                                activeCategory === category.id
+                                  ? "text-primary/70"
+                                  : "text-muted-foreground group-hover:text-primary/70"
+                              }`}>
+                                {category.subcategories.length} subcategories
+                              </span>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
               <Link
                 href="/industries"
                 className={`${pathname === "/industries" ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground hover:bg-accent"} px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative group`}
@@ -147,12 +253,87 @@ export default function Navbar() {
             >
               About Us
             </Link>
-            <Link
-              href="/products"
-              className={`${pathname === "/products" ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground hover:bg-accent"} block px-4 py-3 rounded-lg text-base font-medium transition-all duration-300`}
-            >
-              Products
-            </Link>
+            <div>
+              <button
+                onClick={() => setIsProductsDropdownOpen(!isProductsDropdownOpen)}
+                className={`${pathname.startsWith("/products") ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground hover:bg-accent"} w-full flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-all duration-300`}
+              >
+                <span>Products</span>
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform duration-300 ${isProductsDropdownOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+              {isProductsDropdownOpen && (
+                <div className="mt-2 ml-4 space-y-1">
+                  <Link
+                    href="/products"
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
+                      !activeCategory && pathname === "/products"
+                        ? "bg-gradient-to-r from-primary/5 to-primary/10 text-primary"
+                        : "hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 hover:text-primary"
+                    }`}
+                    onClick={() => {
+                      setIsProductsDropdownOpen(false);
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200 ${
+                      !activeCategory && pathname === "/products"
+                        ? "bg-primary/10"
+                        : "bg-muted group-hover:bg-primary/10"
+                    }`}>
+                      <Layers size={16} className={`transition-colors duration-200 ${
+                        !activeCategory && pathname === "/products"
+                          ? "text-primary"
+                          : "text-muted-foreground group-hover:text-primary"
+                      }`} />
+                    </div>
+                    <span>All Products</span>
+                  </Link>
+                  {categories.map((category) => {
+                    const Icon = iconMap[category.icon] || Layers;
+                    return (
+                      <Link
+                        key={category.id}
+                        href={`/products?category=${category.id}`}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
+                          activeCategory === category.id
+                            ? "bg-gradient-to-r from-primary/5 to-primary/10 text-primary"
+                            : "hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 hover:text-primary"
+                        }`}
+                        onClick={() => {
+                          setIsProductsDropdownOpen(false);
+                          setIsMenuOpen(false);
+                        }}
+                      >
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200 ${
+                          activeCategory === category.id
+                            ? "bg-primary/10"
+                            : "bg-muted group-hover:bg-primary/10"
+                        }`}>
+                          <Icon size={16} className={`transition-colors duration-200 ${
+                            activeCategory === category.id
+                              ? "text-primary"
+                              : "text-muted-foreground group-hover:text-primary"
+                          }`} />
+                        </div>
+                        <div className="flex-1">
+                          <span className="block">{category.label}</span>
+                          <span className={`block text-xs ${
+                            activeCategory === category.id
+                              ? "text-primary/70"
+                              : "text-muted-foreground group-hover:text-primary/70"
+                          }`}>
+                            {category.subcategories.length} subcategories
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
             <Link
               href="/industries"
               className={`${pathname === "/industries" ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground hover:bg-accent"} block px-4 py-3 rounded-lg text-base font-medium transition-all duration-300`}

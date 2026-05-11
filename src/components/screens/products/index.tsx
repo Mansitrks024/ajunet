@@ -1,17 +1,30 @@
 "use client";
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Search,
   X,
-  ArrowUpRight,
   Filter,
   LayoutGrid,
   Layers,
+  ArrowUpRight,
 } from "lucide-react";
 import { Category, Product } from "../../../data/products-data";
 import FilterSidebar from "./FilterSidebar";
 import Pagination from "../../common/Pagination";
+import ProductSlider from "../../common/ProductSlider";
+import BannerSlider from "../../common/BannerSlider";
+import { getFeaturedProducts } from "../../../lib/utils/featuredProducts";
+
+const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+  "commercial-poe-switch":
+    "Professional-grade PoE switches designed for business networks with reliable power delivery and advanced management features.",
+  "industrial-poe-switch":
+    "Rugged industrial PoE switches built to withstand harsh environments with extended temperature ranges and robust construction.",
+  "ethernet-switch":
+    "High-performance Ethernet switches providing fast and reliable network connectivity for various applications and network sizes.",
+};
 
 interface ProductsProps {
   categories?: Category[];
@@ -24,9 +37,22 @@ function getSlug(product_url: string) {
   return parts[1] ? `/products/${parts[1].replace(/\/$/, "")}` : "#";
 }
 
-const TAG_STYLES: Record<string, { bg: string; text: string; dot: string; stripe: string; specBg: string; specIcon: string }> = {
+const TAG_STYLES: Record<
+  string,
+  {
+    bg: string;
+    text: string;
+    dot: string;
+    stripe: string;
+    specBg: string;
+    specIcon: string;
+  }
+> = {
   Commercial: {
-    bg: "bg-sky-50", text: "text-sky-700", dot: "bg-sky-400", stripe: "bg-sky-500",
+    bg: "bg-sky-50",
+    text: "text-sky-700",
+    dot: "bg-sky-400",
+    stripe: "bg-sky-500",
     specBg: "bg-sky-100",
     specIcon: "text-sky-700",
   },
@@ -56,7 +82,10 @@ const TAG_STYLES: Record<string, { bg: string; text: string; dot: string; stripe
     specIcon: "text-emerald-700",
   },
   default: {
-    bg: "bg-slate-100", text: "text-slate-600", dot: "bg-slate-400", stripe: "bg-slate-500",
+    bg: "bg-slate-100",
+    text: "text-slate-600",
+    dot: "bg-slate-400",
+    stripe: "bg-slate-500",
     specBg: "bg-slate-100",
     specIcon: "text-slate-700",
   },
@@ -72,90 +101,123 @@ function ProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={slug}
-      className="group block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-[20px]"
+      className="group block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
     >
-      <article className="relative h-full flex flex-col bg-white rounded-[20px] border border-slate-100 overflow-hidden transition-all duration-300 hover:border-slate-200 hover:-translate-y-1">
-
-        {/* Colored top stripe — appears on hover */}
+      <article className="relative h-full bg-gradient-to-br from-white to-slate-50/30 rounded-2xl border border-slate-200/60 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 hover:border-slate-300/80">
+        {/* Gradient overlay on hover */}
         <div
-          className={`absolute top-0 left-0 right-0 h-[3px] ${tagStyle.stripe} opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10`}
+          className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-br ${tagStyle.specBg}/20 z-0`}
         />
 
-        {/* Image zone */}
-        <div className="relative bg-slate-50 h-[200px] flex items-center justify-center overflow-hidden">
-          {/* Tinted wash on hover */}
-          <div
-            className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${tagStyle.specBg}`}
-          />
+        {/* Badge - top left corner */}
+        {product.badge && (
+          <div className="absolute top-4 left-4 z-20">
+            <span className="relative inline-flex items-center">
+              <span className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 blur-sm opacity-75"></span>
+              <span className="relative text-[10px] font-black tracking-[0.15em] uppercase px-3 py-1.5 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-lg shadow-lg">
+                {product.badge}
+              </span>
+            </span>
+          </div>
+        )}
 
-          {product.image_url ? (
-            <img
-              src={product.image_url}
-              alt={product.title || product.name}
-              className="w-auto object-contain relative z-10 transition-transform duration-500 group-hover:scale-[1.08]"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          ) : (
-            <div className="relative z-10 w-16 h-16 rounded-2xl bg-white border border-slate-100 flex flex-col items-center justify-center gap-1 transition-transform duration-500 group-hover:scale-105">
-              <LayoutGrid size={28} className="text-slate-300" />
-              <span className="text-[9px] font-medium text-slate-300">No Image</span>
+        {/* Side accent bar */}
+        <div
+          className={`absolute left-0 top-0 bottom-0 w-1 ${tagStyle.stripe} transform scale-y-0 group-hover:scale-y-100 transition-transform duration-500 origin-top z-10`}
+        />
+
+        <div className="relative z-10 h-full flex flex-col">
+          {/* Header with tag and model */}
+          <div className="flex items-center justify-between p-4 pb-2">
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-2 h-2 rounded-full ${tagStyle.dot} shadow-sm`}
+              />
+              <span
+                className={`text-xs font-bold cpitalize tracking-wider px-2.5 py-1 rounded-md ${tagStyle.bg} ${tagStyle.text} border border-current/20`}
+              >
+                {product.tag}
+              </span>
             </div>
-          )}
-
-          {product.badge && (
-            <span className="absolute top-3 right-3 z-20 text-[9px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 bg-[#1a1a1a] text-white rounded-[6px]">
-              {product.badge}
-            </span>
-          )}
-        </div>
-
-        {/* Body */}
-        <div className="flex flex-col flex-1 p-5 gap-2.5">
-
-          {/* Tag + Model */}
-          <div className="flex items-center justify-between gap-2">
-            <span
-              className={`inline-flex items-center gap-[5px] text-[10.5px] font-medium px-2.5 py-[3px] rounded-full ${tagStyle.bg} ${tagStyle.text}`}
-            >
-              <span className={`w-[6px] h-[6px] rounded-full ${tagStyle.dot}`} />
-              {product.tag}
-            </span>
             {product.model && (
-              <span className="text-[9.5px] font-mono text-slate-400 bg-slate-50 border border-slate-100 px-[7px] py-[2px] rounded-[5px] truncate max-w-[110px]">
-                Model:{product.model}
+              <span className="text-xs font-mono text-slate-500 bg-white/80 backdrop-blur-sm border border-slate-200 px-2 py-1 rounded-md shadow-sm truncate max-w-[100px]">
+                {product.model}
               </span>
             )}
           </div>
 
-          {/* Title */}
-          <h3 className="text-sm font-semibold text-slate-800 leading-snug line-clamp-3 group-hover:text-blue-600 transition-colors duration-200 flex-1">
-            {product.title || product.name}
-          </h3>
-
-          {/* Spec pill */}
-          {ports && (
-            <div className={`flex items-start gap-2 px-2.5 py-2 rounded-[10px] border border-slate-100 ${tagStyle.specBg}`}>
-              <div className={`w-[26px] h-[26px] rounded-[7px] bg-white flex items-center justify-center shrink-0`}>
-                <Layers size={12} className={tagStyle.specIcon} />
+          {/* Image section with new design */}
+          <div className="relative px-4 pb-4">
+            <div className="relative bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-100/60 h-48 flex items-center justify-center overflow-hidden group-hover:border-slate-200 transition-colors duration-300">
+              {/* Background pattern */}
+              <div className="absolute inset-0 opacity-30">
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239CA3AF' fill-opacity='0.1'%3E%3Ccircle cx='2' cy='2' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                  }}
+                ></div>
               </div>
-              <span className="text-[11px] text-slate-500 leading-snug pt-[3px] truncate">
-                {ports}
-              </span>
-            </div>
-          )}
 
-          {/* CTA */}
-          <div className="flex items-center justify-between pt-2.5 mt-auto border-t border-slate-50">
-            <span className="text-xs font-medium text-blue-600 group-hover:text-blue-700 transition-colors">
-              View details
-            </span>
-            <div className="w-[30px] h-[30px] rounded-[9px] bg-blue-50 group-hover:bg-blue-600 flex items-center justify-center transition-all duration-200">
-              <ArrowUpRight
-                size={14}
-                className="text-blue-400 group-hover:text-white transition-colors"
-              />
+              {product.image_url ? (
+                <img
+                  src={product.image_url}
+                  alt={product.title || product.name}
+                  className="w-40 h-40 object-contain relative z-10 transition-all duration-700 group-hover:scale-110 group-hover:drop-shadow-xl"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              ) : (
+                <div className="relative z-10 flex flex-col items-center justify-center gap-2 transition-transform duration-500 group-hover:scale-105">
+                  <div className="w-12 h-12 rounded-xl bg-white border-2 border-slate-200 flex items-center justify-center shadow-sm">
+                    <LayoutGrid size={20} className="text-slate-400" />
+                  </div>
+                  <span className="text-[10px] font-medium text-slate-400">
+                    No Image
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Content section */}
+          <div className="flex-1 flex flex-col px-4 pb-4 gap-3">
+            {/* Title */}
+            <h3 className="text-sm font-bold text-slate-900 leading-tight line-clamp-2 group-hover:text-blue-700 transition-colors duration-300">
+              {product.title || product.name}
+            </h3>
+
+            {/* Specs section */}
+            {ports && (
+              <div className="flex items-center gap-2 p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-100/80">
+                <div
+                  className={`w-8 h-8 rounded-lg bg-gradient-to-br ${tagStyle.specBg} flex items-center justify-center shrink-0 shadow-sm`}
+                >
+                  <Layers size={14} className={tagStyle.specIcon} />
+                </div>
+                <span className="text-xs text-slate-600 font-medium leading-tight truncate max-w-[180px]">
+                  {ports}
+                </span>
+              </div>
+            )}
+
+            {/* Footer with CTA */}
+            <div className="mt-auto pt-3 border-t border-slate-100/60">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-blue-600 group-hover:text-blue-700 transition-colors duration-200">
+                  Explore Product
+                </span>
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 group-hover:bg-blue-600 transition-colors duration-200"></div>
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 group-hover:from-blue-600 group-hover:to-blue-700 flex items-center justify-center transition-all duration-300 shadow-sm group-hover:shadow-lg">
+                    <ArrowUpRight
+                      size={16}
+                      className="text-blue-600 group-hover:text-white transition-colors duration-300"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -192,95 +254,50 @@ export default function Products({
   categories = [],
   products = [],
 }: ProductsProps) {
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [activeSubCat, setActiveSubCat] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 9;
+  const itemsPerPage = 12;
+
+  // Read category from URL query parameter on mount and clear filters when category changes
+  useEffect(() => {
+    const categoryParam = searchParams.get("category");
+    if (categoryParam) {
+      setActiveCat(categoryParam);
+      // Clear subcategory when switching to a different category
+      setActiveSubCat(null);
+      // Reset filter sidebar to hidden when switching categories
+      setShowFilter(false);
+    } else {
+      // When no category parameter (All Products selected), clear all filters
+      setActiveCat(null);
+      setActiveSubCat(null);
+      setShowFilter(false);
+    }
+  }, [searchParams]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-
-    const nodes: { x: number; y: number; vx: number; vy: number; r: number }[] =
-      Array.from({ length: 38 }, () => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        r: Math.random() * 2.5 + 1.5,
-      }));
-
-    let animId: number;
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const dx = nodes[i].x - nodes[j].x;
-          const dy = nodes[i].y - nodes[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 140) {
-            ctx.beginPath();
-            ctx.moveTo(nodes[i].x, nodes[i].y);
-            ctx.lineTo(nodes[j].x, nodes[j].y);
-            ctx.strokeStyle = `rgba(33, 117, 196, ${0.18 * (1 - dist / 140)})`;
-            ctx.lineWidth = 0.8;
-            ctx.stroke();
-          }
-        }
-      }
-
-      nodes.forEach((n) => {
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(33, 117, 196, 0.45)";
-        ctx.fill();
-
-        n.x += n.vx;
-        n.y += n.vy;
-        if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
-        if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
-      });
-
-      animId = requestAnimationFrame(draw);
-    };
-    draw();
-
-    const handleResize = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    };
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
 
   const filtered = useMemo(() => {
     let list = products;
     if (activeCat) list = list.filter((p) => p.category === activeCat);
     if (activeSubCat) {
       list = list.filter((p) => {
+        // This ensures shared subcategories only show products from the correct main category
         const subs = (p.sub_categories || p.sub || "")
           .split("|")
           .map((s) => s.trim());
-        return subs.includes(activeSubCat);
+        return (
+          subs.includes(activeSubCat) &&
+          (!activeCat || p.category === activeCat)
+        );
       });
     }
     if (search.trim()) {
@@ -306,9 +323,15 @@ export default function Products({
   const endIndex = startIndex + itemsPerPage;
   const paginatedProducts = filtered.slice(startIndex, endIndex);
 
+  // Get featured products for slider
+  const featuredProductSets = getFeaturedProducts(
+    products,
+    activeCat,
+    categories,
+  );
+
   function resetAll() {
     setSearch("");
-    setActiveCat(null);
     setActiveSubCat(null);
     setCurrentPage(1);
   }
@@ -320,73 +343,41 @@ export default function Products({
 
   return (
     <div className="min-h-screen">
-      {/* Hero Strip */}
-      <section className="relative overflow-hidden bg-background px-6 py-24">
-        {/* Animated Network Canvas */}
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full opacity-[0.85]"
-        />
+      {/* Hero Banner with BannerSlider */}
+      <BannerSlider />
 
-        {/* Radial gradient overlay */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse 70% 60% at 50% 40%, hsl(var(--primary) / 0.22) 0%, transparent 70%)",
-          }}
-        />
-
-        <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/40 bg-primary/12 mb-8">
-            <span className="w-[7px] h-[7px] rounded-full bg-primary inline-block shadow-[0_0_0_3px_hsl(var(--primary)_/_0.25)] animate-pulse" />
-            <span className="text-[13px] font-medium tracking-[0.06em] text-primary/80 uppercase">
-              Product Catalog
-            </span>
-          </div>
-
-          <h1 className="text-5xl font-bold leading-[1.1] tracking-[-0.025em] text-foreground max-w-[820px] mb-6">
-            Network Equipment
-          </h1>
-          <p className="text-muted-foreground text-sm max-w-xl mb-8">
-            We offer a comprehensive range of networking products designed for
-            performance, reliability, and scalability.
-          </p>
-
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-xl border border-border">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-sm font-medium">{products.length} Products Available</span>
-            </div>
-            <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-xl border border-border">
-              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-              <span className="text-sm font-medium">{categories.length} Categories</span>
-            </div>
-            <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-xl border border-border">
-              <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-              <span className="text-sm font-medium">24/7 Support</span>
-            </div>
-          </div>
+      {featuredProductSets.length > 0 && (
+        <div className="py-12">
+          {featuredProductSets.map((featuredSet, index) => (
+            <ProductSlider
+              key={`${featuredSet.category}-${index}`}
+              products={featuredSet.products}
+              title={featuredSet.title}
+              subtitle={featuredSet.subtitle}
+              slidesPerView={4}
+              spaceBetween={20}
+            />
+          ))}
         </div>
-      </section>
+      )}
 
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-8 flex gap-8">
-        {/* ── DESKTOP SIDEBAR ────────────────────────────── */}
-        <aside className="hidden lg:block w-72 shrink-0">
-          <FilterSidebar
-            categories={categories}
-            products={products}
-            activeCat={activeCat}
-            activeSubCat={activeSubCat}
-            search={search}
-            onCatChange={setActiveCat}
-            onSubCatChange={setActiveSubCat}
-            onSearchChange={setSearch}
-            onReset={resetAll}
-          />
-        </aside>
+        {/* ── DESKTOP SIDEBAR ──*/}
+        {showFilter && (
+          <aside className="hidden lg:block w-72 shrink-0">
+            <FilterSidebar
+              categories={categories}
+              products={products}
+              activeCat={activeCat}
+              activeSubCat={activeSubCat}
+              onCatChange={setActiveCat}
+              onSubCatChange={setActiveSubCat}
+              onReset={resetAll}
+            />
+          </aside>
+        )}
 
-        {/* ── MOBILE DRAWER ──────────────────────────────── */}
+        {/* ── MOBILE DRAWER ────*/}
         {sidebarOpen && (
           <div className="lg:hidden fixed inset-0 z-50 flex">
             <div
@@ -412,10 +403,8 @@ export default function Products({
                   products={products}
                   activeCat={activeCat}
                   activeSubCat={activeSubCat}
-                  search={search}
                   onCatChange={setActiveCat}
                   onSubCatChange={setActiveSubCat}
-                  onSearchChange={setSearch}
                   onReset={() => {
                     resetAll();
                     setSidebarOpen(false);
@@ -426,23 +415,76 @@ export default function Products({
           </div>
         )}
 
-        {/* ── MAIN CONTENT ────────────────────────────────── */}
-        <main className="flex-1 min-w-0">
+        {/* ── MAIN CONTENT ──────*/}
+        <main className="flex-1 min-w-0 mb-12">
           {/* Section header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 py-16">
             <div>
-              <h1 className="text-xl font-bold text-slate-900">
-                {activeLabel || "All Products"}
-              </h1>
-              <span className="text-sm text-slate-400 sm:hidden">
-                {filtered.length} products
-              </span>
-              {activeSubCat && (
-                <p className="text-sm text-slate-500 mt-0.5">{activeSubCat}</p>
-              )}
+              <div className="inline-flex items-center gap-2">
+                <div className="w-8 h-0.5 bg-primary rounded-[2px]" />
+                <span className="text-lg font-bold tracking-[0.1em] uppercase text-primary">
+                  {activeLabel || "All Products"}
+                </span>
+                <div className="w-8 h-0.5 bg-primary rounded-[2px]" />
+              </div>
+
+              <div className="flex items-center gap-2">
+                {activeSubCat && (
+                  <>
+                    <p className="text-sm text-slate-600 mt-0.5">
+                      {activeSubCat}
+                    </p>{" "}
+                    {" | "}
+                  </>
+                )}
+
+                <span className="text-sm text-slate-400 mt-0.5">
+                  {filtered.length} products
+                </span>
+              </div>
             </div>
 
-            <div>
+            <div className="flex items-center gap-3">
+              {/* Search Bar */}
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  <Search size={14} />
+                </div>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search products..."
+                  className="w-64 lg:w-80 pl-10 pr-10 py-2.5 text-sm bg-background border-2 border-border rounded-xl focus:border-primary focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 placeholder:text-muted-foreground"
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg p-1 transition-all duration-200"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+
+              {/* Desktop Filter Button - Only show when a category is selected */}
+              {activeCat && (
+                <button
+                  onClick={() => setShowFilter(!showFilter)}
+                  className="hidden lg:flex items-center gap-2.5 text-sm font-medium text-foreground bg-gradient-to-r from-muted to-muted/80 hover:from-muted/90 hover:to-muted border border-border px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+                >
+                  <Filter
+                    size={15}
+                    className="group-hover:scale-110 transition-transform duration-200"
+                  />
+                  <span className="font-medium">Filters</span>
+                  {hasFilters && (
+                    <span className="w-2 h-2 rounded-full bg-gradient-to-r from-primary to-primary/70 shrink-0 animate-pulse" />
+                  )}
+                </button>
+              )}
+
+              {/* Mobile Filter Button */}
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden flex items-center gap-2.5 text-sm font-medium text-foreground bg-gradient-to-r from-muted to-muted/80 hover:from-muted/90 hover:to-muted border border-border px-4 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
@@ -527,7 +569,13 @@ export default function Products({
           {/* Product grid */}
           {filtered.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+              <div
+                className={`grid gap-5 ${
+                  showFilter
+                    ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
+                    : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                }`}
+              >
                 {paginatedProducts.map((product) => (
                   <ProductCard
                     key={`${product.product_id}-${product.product_url}`}
