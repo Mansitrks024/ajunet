@@ -1,5 +1,5 @@
 import React from "react";
-import Navbar from "./navbar";
+import NavbarWrapper from "./navbar-wrapper";
 import Footer from "./footer";
 
 interface LayoutProps {
@@ -10,7 +10,7 @@ interface LayoutProps {
 export default function Layout({ children, className = "" }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
+      <NavbarWrapper />
       <main className={`flex-1 bg-background pt-20 ${className}`}>
         <div className="mx-auto">{children}</div>
       </main>
